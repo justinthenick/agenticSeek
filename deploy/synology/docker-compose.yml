@@ -41,7 +41,7 @@ services:
       AGENT_RUNTIME_DIR: /opt/agent-runtime
       BACKEND_PORT: "7777"
       BACKEND_HOST: 0.0.0.0
-      FRONTEND_ORIGINS: http://${NAS_HOST}:3000
+      FRONTEND_ORIGINS: ${NAS_SCHEME:-http}://${NAS_HOST}:${FRONTEND_PORT:-3100}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
@@ -61,15 +61,12 @@ services:
 
   frontend:
     build:
-      context: ../../frontend
-      dockerfile: Dockerfile.frontend
+      context: ../..
+      dockerfile: deploy/synology/Dockerfile.frontend
     container_name: agenticseek-frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    environment:
-      NODE_ENV: production
-      REACT_APP_BACKEND_URL: http://${NAS_HOST}:7777
+      - "${FRONTEND_PORT:-3100}:80"
     depends_on:
       - backend
     networks:
