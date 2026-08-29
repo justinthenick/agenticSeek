@@ -28,6 +28,7 @@ services:
       - agenticseek
 
   backend:
+    image: agenticseek-backend:synology
     build:
       context: ../..
       dockerfile: Dockerfile.backend
@@ -62,6 +63,7 @@ services:
       - agenticseek
 
   frontend:
+    image: agenticseek-frontend:synology
     build:
       context: ../..
       dockerfile: deploy/synology/Dockerfile.frontend
