@@ -1,0 +1,17 @@
+[MAIN]
+is_local = False
+provider_name = openrouter
+provider_model = deepseek/deepseek-v3.2
+provider_server_address =
+agent_name = Jarvis
+recover_last_session = False
+save_session = False
+speak = False
+listen = False
+jarvis_personality = False
+languages = en
+safe_mode = False
+
+[BROWSER]
+headless_browser = True
+stealth_mode = False
