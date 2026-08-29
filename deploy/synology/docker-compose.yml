@@ -1,0 +1,84 @@
+version: "3.7"
+
+services:
+  redis:
+    image: docker.io/valkey/valkey:8-alpine
+    container_name: agenticseek-redis
+    restart: unless-stopped
+    command: valkey-server --save 30 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    networks:
+      - agenticseek
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: agenticseek-searxng
+    restart: unless-stopped
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_SECRET_KEY: ${SEARXNG_SECRET_KEY}
+      GRANIAN_WORKERS: "1"
+      GRANIAN_BLOCKING_THREADS: "2"
+    volumes:
+      - ../../searxng:/etc/searxng:rw
+    depends_on:
+      - redis
+    networks:
+      - agenticseek
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.backend
+    container_name: agenticseek-backend
+    restart: unless-stopped
+    command: python3 api.py
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080
+      REDIS_URL: redis://redis:6379/0
+      WORK_DIR: /opt/workspace
+      AGENT_RUNTIME_DIR: /opt/agent-runtime
+      BACKEND_PORT: "7777"
+      BACKEND_HOST: 0.0.0.0
+      FRONTEND_ORIGINS: http://${NAS_HOST}:3000
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      TOGETHER_API_KEY: ${TOGETHER_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
+      DSK_DEEPSEEK_API_KEY: ${DSK_DEEPSEEK_API_KEY}
+    volumes:
+      - ${WORKSPACE_DIR}:/opt/workspace
+      - agent-runtime:/opt/agent-runtime
+    depends_on:
+      - redis
+      - searxng
+    networks:
+      - agenticseek
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.frontend
+    container_name: agenticseek-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      REACT_APP_BACKEND_URL: http://${NAS_HOST}:7777
+    depends_on:
+      - backend
+    networks:
+      - agenticseek
+
+networks:
+  agenticseek:
+    driver: bridge
+
+volumes:
+  redis-data:
+  agent-runtime:
