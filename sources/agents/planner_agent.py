@@ -242,13 +242,24 @@ class PlannerAgent(Agent):
         agent_prompt = self.make_prompt(task['task'], required_infos)
         pretty_print(f"Agent {task['agent']} started working...", color="status")
         self.logger.info(f"Agent {task['agent']} started working on {task['task']}.")
-        answer, reasoning = await self.agents[task['agent'].lower()].process(agent_prompt, None)
+
+        # Reset per-task execution state.
+        # Planner agents are reused between tasks, so leaving blocks_result populated
+        # causes block:0 in a new response to reference an old task's execution result.
+        selected_agent = self.agents[task['agent'].lower()]
+        selected_agent.blocks_result = []
+        selected_agent.success = True
+        selected_agent.last_answer = ""
+        selected_agent.last_reasoning = ""
+        selected_agent.stop = False
+
+        answer, reasoning = await selected_agent.process(agent_prompt, None)
         self.last_answer = answer
         self.last_reasoning = reasoning
-        self.blocks_result = self.agents[task['agent'].lower()].blocks_result
-        agent_answer = self.agents[task['agent'].lower()].raw_answer_blocks(answer)
-        success = self.agents[task['agent'].lower()].get_success
-        self.agents[task['agent'].lower()].show_answer()
+        self.blocks_result = selected_agent.blocks_result
+        agent_answer = selected_agent.raw_answer_blocks(answer)
+        success = selected_agent.get_success
+        selected_agent.show_answer()
         pretty_print(f"Agent {task['agent']} completed task.", color="status")
         self.logger.info(f"Agent {task['agent']} finished working on {task['task']}. Success: {success}")
         agent_answer += "\nAgent succeeded with task." if success else "\nAgent failed with task (Error detected)."
