@@ -4,7 +4,7 @@ services:
   redis:
     image: docker.io/valkey/valkey:8-alpine
     container_name: agenticseek-redis
-    restart: unless-stopped
+    restart: "no"
     command: valkey-server --save 30 1 --loglevel warning
     volumes:
       - redis-data:/data
@@ -14,7 +14,7 @@ services:
   searxng:
     image: docker.io/searxng/searxng:latest
     container_name: agenticseek-searxng
-    restart: unless-stopped
+    restart: "no"
     environment:
       SEARXNG_BASE_URL: http://searxng:8080/
       SEARXNG_SECRET_KEY: ${SEARXNG_SECRET_KEY}
@@ -33,7 +33,7 @@ services:
       context: ../..
       dockerfile: Dockerfile.backend
     container_name: agenticseek-backend
-    restart: unless-stopped
+    restart: "no"
     command: python3 api.py
     environment:
       SEARXNG_BASE_URL: http://searxng:8080
@@ -68,7 +68,7 @@ services:
       context: ../..
       dockerfile: deploy/synology/Dockerfile.frontend
     container_name: agenticseek-frontend
-    restart: unless-stopped
+    restart: "no"
     ports:
       - "${FRONTEND_PORT:-3100}:80"
     depends_on:
